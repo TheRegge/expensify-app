@@ -57,6 +57,15 @@ export const removeExpense = ({id} = {}) => ({
     id
 });
 
+// ASYNC REMOVE_EXPENSE
+export const startRemoveExpense = ({id} = {}) => {
+    return (dispatch) => {
+        return database.ref(`expenses/${id}`).remove().then(() =>{
+            dispatch(removeExpense({id}));
+        });
+    };
+};
+
 // EDIT_EXPENSE ACTION GENERATOR
 export const editExpense = (id, updates) => ({
     type: 'EDIT_EXPENSE',
@@ -71,6 +80,7 @@ export const setExpenses = (expenses) => ({
     expenses
 });
 
+// ASYNC SET_EXPENSES
 // The wrapper to make async call to Firebase
 // then trigger `setExpenses` wich changes
 // the store

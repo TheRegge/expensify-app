@@ -6,7 +6,8 @@ import {
     editExpense,
     removeExpense,
     setExpenses,
-    startSetExpenses
+    startSetExpenses,
+    startRemoveExpense
 } from '../../actions/expenses';
 import expenses from '../fixtures/expenses';
 import database from '../../firebase/firebase';
@@ -31,6 +32,30 @@ test('should setup remove expense action object', () => {
         type: 'REMOVE_EXPENSE',
         id: '123abc'
     });
+});
+
+test('should remove expense from Firebase', (done) => {
+    // Below, creating the store:
+    // looks like we don't need to pass expenses to the store
+    // because the test doesn't care if the expense
+    // is removed or not from the redux store. Just care for Firebase
+    const store = createMockStore({expenses});
+    const id = expenses[0].id;
+    store.dispatch(startRemoveExpense({id}))
+    .then(() => {
+        // check that the last action on the store
+        // was the 'REMOVE_EXPENSE' action with the correct id:
+        const actions = store.getActions();
+        expect(actions[0]).toEqual({
+            type: 'REMOVE_EXPENSE',
+            id
+        });
+        // then check if the expense was removed from Firebase:
+        return database.ref(`expenses/${id}`).once('value');
+    }).then((snapshot) => {
+        expect(snapshot.val()).toBeFalsy();
+        done();
+    });;
 });
 
 test('should setup edit expense action object', () => {
@@ -135,3 +160,4 @@ test('should fetch the expenses from Firebase', (done) => {
         done();
     });
 });
+
