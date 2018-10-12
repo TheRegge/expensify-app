@@ -1,11 +1,29 @@
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
-import { startAddExpense, addExpense, editExpense, removeExpense } from '../../actions/expenses';
+import {
+    startAddExpense,
+    addExpense,
+    editExpense,
+    removeExpense,
+    setExpenses,
+    startSetExpenses
+} from '../../actions/expenses';
 import expenses from '../fixtures/expenses';
 import database from '../../firebase/firebase';
 
 // Create the config
 const createMockStore = configureMockStore([thunk]);
+
+// Write some data to the test database for before
+// each test. Using `done` to make sure the data is
+// written (async) before the test runs.
+beforeEach((done) => {
+    const expensesData = {};
+    expenses.forEach(({id, description, note, amount, createdAt}) => {
+        expensesData[id] = {description, note, amount , createdAt};
+    });
+    database.ref('expenses').set(expensesData).then(() => done());
+});
 
 test('should setup remove expense action object', () => {
     const action = removeExpense({id: '123abc'});
@@ -95,16 +113,25 @@ test('should add expense with defaults to database and store', (done) => {
     });;
 });
 
-// test('should setup expense action object with default values', () => {
-//     const action = addExpense();
-//     expect(action).toEqual({
-//         type: 'ADD_EXPENSE',
-//         expense: {
-//             id: expect.any(String),
-//             description: '',
-//             note: '',
-//             amount: 0,
-//             createdAt: 0,
-//         }
-//     })
-// });
+// this on is NOT async
+test('should setup set expense action object with data', () => {
+    const action = setExpenses(expenses);
+    expect(action).toEqual({
+        type: 'SET_EXPENSES',
+        expenses
+    });
+});
+
+test('should fetch the expenses from Firebase', (done) => {
+    // First create the empty mock store
+    // that will be filled by Firebase:
+    const store = createMockStore({});
+    store.dispatch(startSetExpenses()).then(() => {
+        const actions = store.getActions();
+        expect(actions[0]).toEqual({
+            type: 'SET_EXPENSES',
+            expenses // those were seeded in the beforeEach, so they should be returned here by Firebase
+        });
+        done();
+    });
+});

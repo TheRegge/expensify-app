@@ -19,8 +19,14 @@ export default (state=expensesReducerDefaultState, action) => {
                 } else {
                     return expense;
                 }
-                
             });
+        // remove all existing expenses in store and 
+        // add a new set of expenses passed
+        // in the action (the expenses fetched from
+        // firebase) So basically, it loads expenses
+        // from Firebase db:
+        case 'SET_EXPENSES':
+            return action.expenses;
         default:
             return state;
     }

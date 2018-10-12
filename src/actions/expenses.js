@@ -63,3 +63,33 @@ export const editExpense = (id, updates) => ({
     id,
     updates
 });
+
+// SET_EXPENSES
+// The action actually changing the store
+export const setExpenses = (expenses) => ({
+    type: 'SET_EXPENSES',
+    expenses
+});
+
+// The wrapper to make async call to Firebase
+// then trigger `setExpenses` wich changes
+// the store
+export const startSetExpenses = () => {
+    return (dispatch) => {
+        return database.ref('expenses')
+            .once('value')
+            .then((snapshot) => {
+            const expenses = [];
+            // parse data to work with our store:
+            snapshot.forEach((childSnapshot) => {
+                expenses.push({
+                    id: childSnapshot.key,
+                    ...childSnapshot.val()
+                });
+            });
+            // Dispatch the 'real' action which
+            // puts the data in the redux store:
+            dispatch(setExpenses(expenses));
+        });
+    };
+};
