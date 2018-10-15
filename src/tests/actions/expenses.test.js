@@ -7,7 +7,8 @@ import {
     removeExpense,
     setExpenses,
     startSetExpenses,
-    startRemoveExpense
+    startRemoveExpense,
+    startEditExpense
 } from '../../actions/expenses';
 import expenses from '../fixtures/expenses';
 import database from '../../firebase/firebase';
@@ -67,12 +68,32 @@ test('should setup edit expense action object', () => {
     });
 });
 
+test('should edit expense from Firebase', (done) => {
+    const store = createMockStore({expenses});
+    const id = expenses[0].id;
+    const updates = { amount: 205 };
+    store.dispatch(startEditExpense(id, updates))
+    .then(() => {
+        const actions = store.getActions();
+        expect(actions[0]).toEqual({
+            type: 'EDIT_EXPENSE',
+            id,
+            updates
+        });
+        return database.ref(`expenses/${id}`).once('value');
+    }).then((snapshot) => {
+        expect(snapshot.val().amount).toBe(updates.amount);
+        done();
+    });
+});
+
+
 test('should setup addExpense action object with provided values', () => {
     const action = addExpense(expenses[2]);
     expect(action).toEqual({
         type: 'ADD_EXPENSE',
         expense: expenses[2]
-    })
+    });
 });
 
 // Testing Asychronous action generators
@@ -109,7 +130,7 @@ test('should add expense to database and store', (done) => {
     }).then((snapshot) => {
         expect(snapshot.val()).toEqual(expenseData);
         done();
-    });;
+    });
 });
 
 test('should add expense with defaults to database and store', (done) => {
